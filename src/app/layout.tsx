@@ -83,6 +83,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           name="google-site-verification"
           content="google6b952db2d93bb4b8"
         />
+        <meta
+          name="google-site-verification"
+          content="-uWzMpy_FQQTwHmAFTsD96Ed7FqUVgJf9RHLMeBGeG4"
+        />
       </head>
       <body suppressHydrationWarning className="min-h-full flex flex-col">
         <ServiceWorkerRegistration />
