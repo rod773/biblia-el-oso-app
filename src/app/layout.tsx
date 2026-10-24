@@ -78,6 +78,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="es"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <meta
+          name="google-site-verification"
+          content="google6b952db2d93bb4b8"
+        />
+      </head>
       <body suppressHydrationWarning className="min-h-full flex flex-col">
         <ServiceWorkerRegistration />
         {children}
