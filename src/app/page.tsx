@@ -42,9 +42,9 @@ type PageEntry = {
 
 const allPages = pages as PageEntry[];
 
-const findNextChapter = (filtered: PageEntry[], currentBook: string, currentChapter: number) => {
+const findNextChapter = (currentBook: string, currentChapter: number) => {
   let inCurrent = false;
-  for (const p of filtered) {
+  for (const p of allPages) {
     if (!p.book || !p.chapter) continue;
     const isCurrent = p.book === currentBook && p.chapter === currentChapter;
     if (!inCurrent) {
@@ -56,9 +56,9 @@ const findNextChapter = (filtered: PageEntry[], currentBook: string, currentChap
   return null;
 };
 
-const findPrevChapter = (filtered: PageEntry[], currentBook: string, currentChapter: number) => {
+const findPrevChapter = (currentBook: string, currentChapter: number) => {
   let prev: { book: string; chapter: number } | null = null;
-  for (const p of filtered) {
+  for (const p of allPages) {
     if (!p.book || !p.chapter) continue;
     if (p.book === currentBook && p.chapter === currentChapter) return prev;
     prev = { book: p.book, chapter: p.chapter };
@@ -66,8 +66,8 @@ const findPrevChapter = (filtered: PageEntry[], currentBook: string, currentChap
   return null;
 };
 
-const findChapterStartIndex = (filtered: PageEntry[], targetBook: string, targetChapter: number) => {
-  return filtered.findIndex((p) => p.book === targetBook && p.chapter === targetChapter);
+const findPageIndexByBookChapter = (targetBook: string, targetChapter: number) => {
+  return allPages.findIndex((p) => p.book === targetBook && p.chapter === targetChapter);
 };
 
 const ANTIGUO_TESTAMENTO = [
@@ -132,15 +132,6 @@ export default function Home() {
 
   const introPages = useMemo(() => allPages.filter((p) => p.book == null), []);
 
-  const filteredPages = useMemo(() => {
-    return allPages.filter((p) => {
-      if (!p.book) return true;
-      if (testament === "todos") return true;
-      if (testament === "antiguo") return ANTIGUO_TESTAMENTO.includes(p.book);
-      return NUEVO_TESTAMENTO.includes(p.book);
-    });
-  }, [testament]);
-
   const isIntro = book === null || book === "Introducción";
   const effectivePages = useMemo(() => (isIntro ? introPages : chapterPages), [isIntro, introPages, chapterPages]);
 
@@ -149,9 +140,9 @@ export default function Home() {
     if (localIdx < effectivePages.length - 1) {
       gotoLocal(localIdx + 1);
     } else {
-      const next = findNextChapter(filteredPages, book, chapter);
+      const next = findNextChapter(book, chapter);
       if (next) {
-        const idx = findChapterStartIndex(filteredPages, next.book, next.chapter);
+        const idx = findPageIndexByBookChapter(next.book, next.chapter);
         if (idx >= 0) {
           setBook(next.book);
           setChapter(next.chapter);
@@ -166,9 +157,9 @@ export default function Home() {
     if (localIdx > 0) {
       gotoLocal(localIdx - 1);
     } else {
-      const prev = findPrevChapter(filteredPages, book, chapter);
+      const prev = findPrevChapter(book, chapter);
       if (prev) {
-        const prevPages = filteredPages.filter((p) => p.book === prev.book && p.chapter === prev.chapter);
+        const prevPages = allPages.filter((p) => p.book === prev.book && p.chapter === prev.chapter);
         setBook(prev.book);
         setChapter(prev.chapter);
         setLocalIdx(prevPages.length - 1);
@@ -178,13 +169,13 @@ export default function Home() {
 
   const hasNextChapter = useMemo(() => {
     if (!book || chapter == null) return false;
-    return findNextChapter(filteredPages, book, chapter) != null;
-  }, [book, chapter, filteredPages]);
+    return findNextChapter(book, chapter) != null;
+  }, [book, chapter]);
 
   const hasPrevChapter = useMemo(() => {
     if (!book || chapter == null) return false;
-    return findPrevChapter(filteredPages, book, chapter) != null;
-  }, [book, chapter, filteredPages]);
+    return findPrevChapter(book, chapter) != null;
+  }, [book, chapter]);
 
   const readingRef = useRef(false);
   const sessionRef = useRef(0);
@@ -287,9 +278,9 @@ export default function Home() {
           if (pageIdx + 1 < pages.length) {
             startReading(pages, pageIdx + 1);
           } else if (book && chapter != null) {
-            const nextChap = findNextChapter(filteredPages, book, chapter);
+            const nextChap = findNextChapter(book, chapter);
             if (nextChap) {
-              const chapPages = filteredPages.filter(
+              const chapPages = allPages.filter(
                 (x) => x.book === nextChap.book && x.chapter === nextChap.chapter,
               );
               setBook(nextChap.book);
@@ -511,6 +502,13 @@ export default function Home() {
         <button onClick={stopReading} className="px-4 py-2 border rounded text-base">
           Detener
         </button>
+        <a
+          href="/Biblia%20el%20oso.pdf"
+          download="Biblia el oso.pdf"
+          className="px-4 py-2 border rounded text-base"
+        >
+          Descargar PDF
+        </a>
         {reading && <span className="text-sm text-green-600">Leyendo…</span>}
       </div>
       {p && (

@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     title: "Biblia el oso — Lector en Voz Alta",
     description:
       "Lectura en voz alta de la Biblia el oso (Reina Valera 1654). Selecciona un libro y capítulo, escucha el texto narrado página por página.",
-    url: "https://biblia-el-oso-gggrpohb1-rod773s-projects.vercel.app",
+    url: "https://biblia-el-oso-kz0vd0o79-rod773s-projects.vercel.app",
     siteName: "Biblia el oso",
     locale: "es_ES",
     type: "website",
@@ -56,6 +56,9 @@ export const metadata: Metadata = {
     description:
       "Lectura en voz alta de la Biblia el oso (Reina Valera 1654). Selecciona un libro y capítulo, escucha el texto narrado página por página.",
     images: ["/icon-512x512.png"],
+  },
+  other: {
+    "google-site-verification": "-uWzMpy_FQQTwHmAFTsD96Ed7FqUVgJf9RHLMeBGeG4",
   },
   icons: {
     apple: "/apple-touch-icon.png",
