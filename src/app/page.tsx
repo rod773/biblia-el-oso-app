@@ -275,7 +275,7 @@ export default function Home() {
   const p = effectivePages[localIdx] ?? allPages.find((x) => x.page === 1);
 
   return (
-    <main className="flex min-h-screen flex-col items-center gap-4 p-2">
+    <main className="flex min-h-screen flex-col items-center gap-2 p-2">
       <h1 className="text-2xl font-bold">Biblia el oso</h1>
       <p className="text-sm opacity-70" suppressHydrationWarning>
         {book && book !== "Introducción" && chapter != null
@@ -418,7 +418,7 @@ export default function Home() {
           <img
             src={pageSrc(p.page)}
             alt={`Página ${p.page}`}
-            className="w-full max-w-[96vw] max-h-[85vh] object-contain border"
+            className="w-full max-w-[96vw] object-contain border"
           />
         </>
       )}
