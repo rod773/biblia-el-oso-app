@@ -506,8 +506,7 @@ export default function Home() {
           Detener
         </button>
         <a
-          href="/Biblia%20el%20oso.pdf"
-          download="Biblia el oso.pdf"
+          href="/api/download-pdf"
           className="px-4 py-2 border rounded text-base"
         >
           Descargar PDF

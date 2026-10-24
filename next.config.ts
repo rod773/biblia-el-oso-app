@@ -33,15 +33,6 @@ const nextConfig: NextConfig = {
           },
         ],
       },
-      {
-        source: "/Biblia el oso.pdf",
-        headers: [
-          {
-            key: "Content-Disposition",
-            value: 'attachment; filename="Biblia el oso.pdf"',
-          },
-        ],
-      },
     ];
   },
 };
