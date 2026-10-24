@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import pages from "@/pages.json";
 
 const supported =
@@ -33,8 +33,30 @@ const splitText = (text: string): string[] => {
 const pageSrc = (page: number) =>
   `/pages/page-${String(page).padStart(3, "0")}.png`;
 
+type PageEntry = {
+  page: number;
+  book: string | null;
+  chapter: number | null;
+  text: string;
+};
+
+const allPages = pages as PageEntry[];
+
 export default function Home() {
-  const [i, setI] = useState(0);
+  const bookList = useMemo(() => {
+    const seen = new Set<string>();
+    const list: string[] = [];
+    for (const p of allPages) {
+      if (p.book && !seen.has(p.book)) {
+        seen.add(p.book);
+        list.push(p.book);
+      }
+    }
+    return list;
+  }, []);
+  const [book, setBook] = useState<string | null>(null);
+  const [chapter, setChapter] = useState<number | null>(null);
+  const [localIdx, setLocalIdx] = useState(0);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [voiceName, setVoiceName] = useState("");
   const [volume, setVolume] = useState(1);
@@ -45,6 +67,20 @@ export default function Home() {
     unsupportedClient,
     unsupportedServer,
   );
+
+  const chapterList = useMemo(() => {
+    if (!book) return [];
+    const chs = new Set<number>();
+    for (const p of allPages) {
+      if (p.book === book && p.chapter != null) chs.add(p.chapter);
+    }
+    return Array.from(chs).sort((a, b) => a - b);
+  }, [book]);
+
+  const chapterPages = useMemo(() => {
+    if (!book || chapter == null) return [];
+    return allPages.filter((p) => p.book === book && p.chapter === chapter);
+  }, [book, chapter]);
 
   const readingRef = useRef(false);
   const sessionRef = useRef(0);
@@ -120,7 +156,9 @@ export default function Home() {
   };
 
   const readPage = (pageIdx: number, session: number) => {
-    const chunks = splitText(pages[pageIdx].text);
+    const p = chapterPages[pageIdx];
+    if (!p) return;
+    const chunks = splitText(p.text);
     const estimates = chunks.map((t) => Math.max(6000, t.length * 150));
     const totalEst = estimates.reduce((a, b) => a + b, 0) || 1;
     let ci = 0;
@@ -129,8 +167,8 @@ export default function Home() {
       if (session !== sessionRef.current || !readingRef.current) return;
       if (ci >= chunks.length) {
         animateScrollTo(maxScroll());
-        if (autoRef.current && pageIdx + 1 < pages.length) {
-          setI(pageIdx + 1);
+        if (autoRef.current && pageIdx + 1 < chapterPages.length) {
+          setLocalIdx(pageIdx + 1);
           speakPage(pageIdx + 1);
         } else {
           stopReading();
@@ -175,64 +213,123 @@ export default function Home() {
 
   const speakPage = (idx: number) => {
     if (!supported) return;
-    if (idx >= pages.length) {
+    if (idx < 0 || idx >= chapterPages.length) {
       stopReading();
       return;
     }
     const session = ++sessionRef.current;
     readingRef.current = true;
     setReading(true);
-    setI(idx);
+    setLocalIdx(idx);
     window.speechSynthesis.cancel();
     animateScrollTo(0);
     readPage(idx, session);
   };
 
-  const goto = (idx: number) => {
-    if (idx < 0 || idx >= pages.length) return;
+  const gotoLocal = (idx: number) => {
+    if (idx < 0 || idx >= chapterPages.length) return;
     if (readingRef.current) {
       speakPage(idx);
     } else {
-      setI(idx);
+      setLocalIdx(idx);
     }
   };
 
-  const page = pages[i];
+  const handleBookChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const b = e.target.value;
+    setBook(b);
+    setChapter(null);
+    setLocalIdx(0);
+  };
+
+  const handleChapterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setChapter(Number(e.target.value));
+    setLocalIdx(0);
+  };
+
+  const p = chapterPages[localIdx];
 
   return (
     <main className="flex min-h-screen flex-col items-center gap-4 p-4">
       <h1 className="text-2xl font-bold">Biblia el oso</h1>
-      <p className="text-sm opacity-70">Biblia (1654 páginas)</p>
+      <p className="text-sm opacity-70">
+        {book && chapter != null
+          ? `${book} — Capítulo ${chapter}`
+          : "Selecciona un libro y capítulo"}
+      </p>
       {unsupported && (
         <p className="text-sm text-red-600">
           Tu navegador no soporta la API de síntesis de voz (speechSynthesis).
         </p>
       )}
       <div className="flex gap-2 items-center flex-wrap justify-center">
-        <button disabled={i === 0} onClick={() => goto(i - 1)} className="px-3 py-1 border rounded">
-          Anterior
-        </button>
         <select
-          value={i}
-          onChange={(e) => goto(Number(e.target.value))}
+          value={book || ""}
+          onChange={handleBookChange}
           className="border rounded px-2 py-1 text-sm"
-          aria-label="Seleccionar página"
+          aria-label="Seleccionar libro"
         >
-          {pages.map((p, idx) => (
-            <option key={p.page} value={idx}>
-              Página {p.page} / {pages.length}
+          <option value="">Libro</option>
+          {bookList.map((b) => (
+            <option key={b} value={b}>
+              {b}
             </option>
           ))}
         </select>
-        <button disabled={i === pages.length - 1} onClick={() => goto(i + 1)} className="px-3 py-1 border rounded">
-          Siguiente
-        </button>
+        {book ? (
+          <>
+            <select
+              value={chapter != null ? chapter : ""}
+              onChange={handleChapterChange}
+              className="border rounded px-2 py-1 text-sm"
+              aria-label="Seleccionar capítulo"
+              disabled={chapterList.length === 0}
+            >
+              <option value="">Capítulo</option>
+              {chapterList.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+            <button
+              disabled={localIdx === 0}
+              onClick={() => gotoLocal(localIdx - 1)}
+              className="px-3 py-1 border rounded"
+            >
+              Anterior
+            </button>
+            <select
+              value={localIdx}
+              onChange={(e) => gotoLocal(Number(e.target.value))}
+              className="border rounded px-2 py-1 text-sm"
+              aria-label="Seleccionar página"
+              disabled={chapterPages.length === 0}
+            >
+              {chapterPages.map((cp, idx) => (
+                <option key={cp.page} value={idx}>
+                  Página {cp.page}
+                </option>
+              ))}
+            </select>
+            <button
+              disabled={localIdx === chapterPages.length - 1}
+              onClick={() => gotoLocal(localIdx + 1)}
+              className="px-3 py-1 border rounded"
+            >
+              Siguiente
+            </button>
+            <span className="text-xs opacity-60">
+              {localIdx + 1} / {chapterPages.length}
+            </span>
+          </>
+        ) : null}
         <select
           value={voiceName}
           onChange={(e) => {
             setVoiceName(e.target.value);
             voiceNameRef.current = e.target.value;
-            if (readingRef.current) speakPage(i);
+            if (readingRef.current) speakPage(localIdx);
           }}
           className="border rounded px-2 py-1 text-sm"
         >
@@ -265,7 +362,11 @@ export default function Home() {
           />
           Auto-avance
         </label>
-        <button onClick={() => speakPage(i)} className="px-3 py-1 border rounded">
+        <button
+          disabled={!p}
+          onClick={() => p && speakPage(localIdx)}
+          className="px-3 py-1 border rounded"
+        >
           Leer
         </button>
         <button onClick={stopReading} className="px-3 py-1 border rounded">
@@ -273,12 +374,16 @@ export default function Home() {
         </button>
         {reading && <span className="text-sm text-green-600">Leyendo…</span>}
       </div>
-      {/* eslint-disable-next-line @next/next/no-img-element -- páginas escaneadas del PDF */}
-      <img
-        src={pageSrc(page.page)}
-        alt={`Página ${page.page}`}
-        className="max-w-full border"
-      />
+      {p && (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element -- páginas escaneadas del PDF */}
+          <img
+            src={pageSrc(p.page)}
+            alt={`Página ${p.page}`}
+            className="max-w-full border"
+          />
+        </>
+      )}
     </main>
   );
 }
