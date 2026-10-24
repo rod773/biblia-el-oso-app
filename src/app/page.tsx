@@ -42,18 +42,38 @@ type PageEntry = {
 
 const allPages = pages as PageEntry[];
 
+const ANTIGUO_TESTAMENTO = [
+  "Génesis","Éxodo","Levítico","Números","Deuteronomio","Josué","Jueces","Rut",
+  "I Samuel","II Samuel","I Reyes","II Reyes","I Crónicas","II Crónicas","Esdras",
+  "Nehemías","Ester","Job","Salmos","Proverbios","Eclesiastés","Cantares","Isaías",
+  "Jeremías","Lamentaciones","Ezequiel","Daniel","Oseias","Joel","Amós","Abdías",
+  "Jonás","Miqueias","Nahúm","Habacuc","Sofonías","Hageo","Zacarías","Malaquías",
+];
+const NUEVO_TESTAMENTO = [
+  "Mateo","Marcos","Lucas","Juan","Hechos","Romanos","I Corintios","II Corintios",
+  "Gálatas","Efesios","Filipenses","Colosenses","I Tesalonicenses","II Tesalonicenses",
+  "I Timoteo","II Timoteo","Tito","Filemón","Hebreos","Santiago","I Pedro","II Pedro",
+  "I Juan","II Juan","III Juan","Judas","Apocalipsis",
+];
+
 export default function Home() {
+  const [testament, setTestament] = useState<"antiguo" | "nuevo" | "todos">("todos");
   const bookList = useMemo(() => {
     const seen = new Set<string>();
     const list: string[] = [];
     for (const p of allPages) {
       if (p.book && !seen.has(p.book)) {
-        seen.add(p.book);
-        list.push(p.book);
+        let include = true;
+        if (testament === "antiguo") include = ANTIGUO_TESTAMENTO.includes(p.book);
+        else if (testament === "nuevo") include = NUEVO_TESTAMENTO.includes(p.book);
+        if (include) {
+          seen.add(p.book);
+          list.push(p.book);
+        }
       }
     }
     return list;
-  }, []);
+  }, [testament]);
   const [book, setBook] = useState<string | null>(null);
   const [chapter, setChapter] = useState<number | null>(null);
   const [localIdx, setLocalIdx] = useState(0);
@@ -81,6 +101,11 @@ export default function Home() {
     if (!book || chapter == null) return [];
     return allPages.filter((p) => p.book === book && p.chapter === chapter);
   }, [book, chapter]);
+
+  const introPages = useMemo(() => allPages.filter((p) => p.book == null), []);
+
+  const isIntro = book === null || book === "Introducción";
+  const effectivePages = useMemo(() => (isIntro ? introPages : chapterPages), [isIntro, introPages, chapterPages]);
 
   const readingRef = useRef(false);
   const sessionRef = useRef(0);
@@ -156,7 +181,7 @@ export default function Home() {
   };
 
   const readPage = (pageIdx: number, session: number) => {
-    const p = chapterPages[pageIdx];
+    const p = effectivePages[pageIdx];
     if (!p) return;
     const chunks = splitText(p.text);
     const estimates = chunks.map((t) => Math.max(6000, t.length * 150));
@@ -167,7 +192,7 @@ export default function Home() {
       if (session !== sessionRef.current || !readingRef.current) return;
       if (ci >= chunks.length) {
         animateScrollTo(maxScroll());
-        if (autoRef.current && pageIdx + 1 < chapterPages.length) {
+        if (autoRef.current && pageIdx + 1 < effectivePages.length) {
           setLocalIdx(pageIdx + 1);
           speakPage(pageIdx + 1);
         } else {
@@ -213,7 +238,7 @@ export default function Home() {
 
   const speakPage = (idx: number) => {
     if (!supported) return;
-    if (idx < 0 || idx >= chapterPages.length) {
+    if (idx < 0 || idx >= effectivePages.length) {
       stopReading();
       return;
     }
@@ -227,7 +252,7 @@ export default function Home() {
   };
 
   const gotoLocal = (idx: number) => {
-    if (idx < 0 || idx >= chapterPages.length) return;
+    if (idx < 0 || idx >= effectivePages.length) return;
     if (readingRef.current) {
       speakPage(idx);
     } else {
@@ -237,7 +262,7 @@ export default function Home() {
 
   const handleBookChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const b = e.target.value;
-    setBook(b);
+    setBook(b || null);
     setChapter(null);
     setLocalIdx(0);
   };
@@ -247,15 +272,17 @@ export default function Home() {
     setLocalIdx(0);
   };
 
-  const p = chapterPages[localIdx];
+  const p = effectivePages[localIdx] ?? allPages.find((x) => x.page === 1);
 
   return (
     <main className="flex min-h-screen flex-col items-center gap-4 p-4">
       <h1 className="text-2xl font-bold">Biblia el oso</h1>
-      <p className="text-sm opacity-70">
-        {book && chapter != null
+      <p className="text-sm opacity-70" suppressHydrationWarning>
+        {book && book !== "Introducción" && chapter != null
           ? `${book} — Capítulo ${chapter}`
-          : "Selecciona un libro y capítulo"}
+          : book === "Introducción"
+            ? "Introducción"
+            : "Selecciona un libro y capítulo"}
       </p>
       {unsupported && (
         <p className="text-sm text-red-600">
@@ -264,19 +291,30 @@ export default function Home() {
       )}
       <div className="flex gap-2 items-center flex-wrap justify-center">
         <select
-          value={book || ""}
+          value={testament}
+          onChange={(e) => setTestament(e.target.value as "antiguo" | "nuevo" | "todos")}
+          className="border rounded px-2 py-1 text-sm"
+          aria-label="Seleccionar testamento"
+        >
+          <option value="todos">Todos</option>
+          <option value="antiguo">Antiguo Testamento</option>
+          <option value="nuevo">Nuevo Testamento</option>
+        </select>
+        <select
+          value={book ?? ""}
           onChange={handleBookChange}
           className="border rounded px-2 py-1 text-sm"
           aria-label="Seleccionar libro"
         >
           <option value="">Libro</option>
+          <option value="Introducción">Introducción</option>
           {bookList.map((b) => (
             <option key={b} value={b}>
               {b}
             </option>
           ))}
         </select>
-        {book ? (
+        {book && book !== "Introducción" ? (
           <>
             <select
               value={chapter != null ? chapter : ""}
@@ -304,23 +342,23 @@ export default function Home() {
               onChange={(e) => gotoLocal(Number(e.target.value))}
               className="border rounded px-2 py-1 text-sm"
               aria-label="Seleccionar página"
-              disabled={chapterPages.length === 0}
+              disabled={effectivePages.length === 0}
             >
-              {chapterPages.map((cp, idx) => (
+              {effectivePages.map((cp, idx) => (
                 <option key={cp.page} value={idx}>
                   Página {cp.page}
                 </option>
               ))}
             </select>
             <button
-              disabled={localIdx === chapterPages.length - 1}
+              disabled={localIdx === effectivePages.length - 1}
               onClick={() => gotoLocal(localIdx + 1)}
               className="px-3 py-1 border rounded"
             >
               Siguiente
             </button>
             <span className="text-xs opacity-60">
-              {localIdx + 1} / {chapterPages.length}
+              {localIdx + 1} / {effectivePages.length}
             </span>
           </>
         ) : null}
