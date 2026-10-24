@@ -3,6 +3,7 @@ import * as fs from "fs";
 import path from "path";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function GET() {
   const filePath = path.join(process.cwd(), "public", "Biblia el oso.pdf");
