@@ -293,7 +293,7 @@ export default function Home() {
         <select
           value={testament}
           onChange={(e) => setTestament(e.target.value as "antiguo" | "nuevo" | "todos")}
-          className="border rounded px-2 py-1 text-sm"
+          className="border rounded px-3 py-2 text-base"
           aria-label="Seleccionar testamento"
         >
           <option value="todos">Todos</option>
@@ -303,7 +303,7 @@ export default function Home() {
         <select
           value={book ?? ""}
           onChange={handleBookChange}
-          className="border rounded px-2 py-1 text-sm"
+          className="border rounded px-3 py-2 text-base"
           aria-label="Seleccionar libro"
         >
           <option value="">Libro</option>
@@ -319,7 +319,7 @@ export default function Home() {
             <select
               value={chapter != null ? chapter : ""}
               onChange={handleChapterChange}
-              className="border rounded px-2 py-1 text-sm"
+              className="border rounded px-3 py-2 text-base"
               aria-label="Seleccionar capítulo"
               disabled={chapterList.length === 0}
             >
@@ -333,14 +333,14 @@ export default function Home() {
             <button
               disabled={localIdx === 0}
               onClick={() => gotoLocal(localIdx - 1)}
-              className="px-3 py-1 border rounded"
+              className="px-4 py-2 border rounded text-base"
             >
               Anterior
             </button>
             <select
               value={localIdx}
               onChange={(e) => gotoLocal(Number(e.target.value))}
-              className="border rounded px-2 py-1 text-sm"
+              className="border rounded px-3 py-2 text-base"
               aria-label="Seleccionar página"
               disabled={effectivePages.length === 0}
             >
@@ -353,7 +353,7 @@ export default function Home() {
             <button
               disabled={localIdx === effectivePages.length - 1}
               onClick={() => gotoLocal(localIdx + 1)}
-              className="px-3 py-1 border rounded"
+              className="px-4 py-2 border rounded text-base"
             >
               Siguiente
             </button>
@@ -369,7 +369,7 @@ export default function Home() {
             voiceNameRef.current = e.target.value;
             if (readingRef.current) speakPage(localIdx);
           }}
-          className="border rounded px-2 py-1 text-sm"
+          className="border rounded px-3 py-2 text-base"
         >
           {voices.map((v) => (
             <option key={v.name} value={v.name}>
@@ -403,11 +403,11 @@ export default function Home() {
         <button
           disabled={!p}
           onClick={() => p && speakPage(localIdx)}
-          className="px-3 py-1 border rounded"
+          className="px-4 py-2 border rounded text-base"
         >
           Leer
         </button>
-        <button onClick={stopReading} className="px-3 py-1 border rounded">
+        <button onClick={stopReading} className="px-4 py-2 border rounded text-base">
           Detener
         </button>
         {reading && <span className="text-sm text-green-600">Leyendo…</span>}
