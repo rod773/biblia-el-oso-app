@@ -14,14 +14,48 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Biblia el oso",
+  title: {
+    template: "%s | Biblia el oso",
+    default: "Biblia el oso — Lector en Voz Alta",
+  },
   description:
-    "Lector en voz alta de Biblia el oso, mostrando cada página escaneada del PDF original.",
+    "Lectura en voz alta de la Biblia el oso (Reina Valera 1654). Selecciona un libro y capítulo, escucha el texto narrado página por página. Edición escaneada del PDF original en español.",
+  keywords:
+    "Biblia el oso, Biblia Reina Valera 1654, lectura en voz alta, audio bíblico, Biblia en español, lector bíblico, Reina Valera, audio Biblia, estudio bíblico",
+  authors: [{ name: "Biblia el oso" }],
+  creator: "Biblia el oso",
+  publisher: "Biblia el oso",
+  robots: "index, follow",
+  category: "Religion & Spirituality",
   applicationName: "Biblia el oso",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "Biblia el oso",
+  },
+  openGraph: {
+    title: "Biblia el oso — Lector en Voz Alta",
+    description:
+      "Lectura en voz alta de la Biblia el oso (Reina Valera 1654). Selecciona un libro y capítulo, escucha el texto narrado página por página.",
+    url: "https://biblia-el-oso-gggrpohb1-rod773s-projects.vercel.app",
+    siteName: "Biblia el oso",
+    locale: "es_ES",
+    type: "website",
+    images: [
+      {
+        url: "/icon-512x512.png",
+        width: 512,
+        height: 512,
+        alt: "Biblia el oso",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Biblia el oso — Lector en Voz Alta",
+    description:
+      "Lectura en voz alta de la Biblia el oso (Reina Valera 1654). Selecciona un libro y capítulo, escucha el texto narrado página por página.",
+    images: ["/icon-512x512.png"],
   },
   icons: {
     apple: "/apple-touch-icon.png",
