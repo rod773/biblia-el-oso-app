@@ -259,8 +259,20 @@ export default function Home() {
     if (supported) window.speechSynthesis.cancel();
   };
 
-  const readPage = (pageIdx: number, session: number) => {
-    const p = effectivePages[pageIdx];
+  const startReading = (pages: PageEntry[], pageIdx: number) => {
+    const p = pages[pageIdx];
+    if (!p) return;
+    const session = ++sessionRef.current;
+    readingRef.current = true;
+    setReading(true);
+    setLocalIdx(pageIdx);
+    window.speechSynthesis.cancel();
+    animateScrollTo(0);
+    readChapter(pages, pageIdx, session);
+  };
+
+  const readChapter = (pages: PageEntry[], pageIdx: number, session: number) => {
+    const p = pages[pageIdx];
     if (!p) return;
     const chunks = splitText(p.text);
     const estimates = chunks.map((t) => Math.max(6000, t.length * 150));
@@ -272,20 +284,19 @@ export default function Home() {
       if (ci >= chunks.length) {
         animateScrollTo(maxScroll());
         if (autoRef.current) {
-          if (pageIdx + 1 < effectivePages.length) {
-            setLocalIdx(pageIdx + 1);
-            speakPage(pageIdx + 1);
+          if (pageIdx + 1 < pages.length) {
+            startReading(pages, pageIdx + 1);
           } else if (book && chapter != null) {
-            const next = findNextChapter(filteredPages, book, chapter);
-            if (next) {
-              const idx = findChapterStartIndex(filteredPages, next.book, next.chapter);
-              if (idx >= 0) {
-                setBook(next.book);
-                setChapter(next.chapter);
-                setLocalIdx(0);
-                speakPage(0);
-                return;
-              }
+            const nextChap = findNextChapter(filteredPages, book, chapter);
+            if (nextChap) {
+              const chapPages = filteredPages.filter(
+                (x) => x.book === nextChap.book && x.chapter === nextChap.chapter,
+              );
+              setBook(nextChap.book);
+              setChapter(nextChap.chapter);
+              setLocalIdx(0);
+              startReading(chapPages, 0);
+              return;
             }
             stopReading();
           } else {
@@ -338,13 +349,7 @@ export default function Home() {
       stopReading();
       return;
     }
-    const session = ++sessionRef.current;
-    readingRef.current = true;
-    setReading(true);
-    setLocalIdx(idx);
-    window.speechSynthesis.cancel();
-    animateScrollTo(0);
-    readPage(idx, session);
+    startReading(effectivePages, idx);
   };
 
   const gotoLocal = (idx: number) => {
