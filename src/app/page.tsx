@@ -506,8 +506,9 @@ export default function Home() {
           Detener
         </button>
         <a
-          href="/Biblia%20el%20oso.pdf"
-          download="Biblia el oso.pdf"
+          href="https://drive.google.com/file/d/1U3YfnsAf2DhEw8mFQNlLl2vFdylSN127/view?usp=sharing"
+          target="_blank"
+          rel="noopener noreferrer"
           className="px-4 py-2 border rounded text-base"
         >
           Descargar PDF
